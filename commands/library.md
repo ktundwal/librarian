@@ -17,7 +17,7 @@ The user invoked: `/library $ARGUMENTS`
 ## Subcommands
 
 ### `add <path-or-url>`
-Register a local file, directory, or URL as a library source.
+Register a local file, directory, or URL as a library source. Automatically indexes after adding (no separate `reindex` needed).
 ```bash
 python3 ${CLAUDE_PLUGIN_ROOT}/scripts/add.py "<path-or-url>"
 ```

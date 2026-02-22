@@ -2,85 +2,90 @@
 
 A local-first research scout for coding agents.
 
-**Zero API keys required.** Librarian indexes your docs, books, and papers for grounded retrieval — and now scouts the web for new content matching your interests.
+**Zero API keys required.** Librarian indexes your docs, books, and papers for grounded retrieval — and scouts the web for new content matching your interests.
 
-## Who is this for?
-
-- **Solo builders** who curate technical references and want them available during coding
-- **Research-heavy engineers** tracking fast-moving fields (AI, biomedical, etc.)
-- **Agentic workflows** that benefit from grounded context over generic LLM knowledge
+Pair it with [Context7](https://github.com/upstash/context7) for official SDK/framework docs, and Librarian for everything else — your books, papers, notes, and curated web sources.
 
 ## Quick start
 
 ```bash
 pip install -e .
-
-# Add and index your docs
-/library add <path-or-url>
-/library reindex
-
-# Search your library
-/library search "vector database indexing"
-
-# Set up automated scouting
-/library watch shelf install ai
-/library watch check
 ```
 
-## What it does
-
-### Search & Index (v0.1)
-- Add sources from file paths, directories, or URLs
-- Fetch URL content with HTML-to-markdown conversion and caching
-- Chunk and embed into a local vector index (no external services)
-- Semantic search with source attribution in every result
-- Refresh stale URL sources on demand
-
-### Watchlist & Scouting (v0.2)
-- Define **what you care about** (topics) and **where to look** (channels)
-- Scout 5 channel types: **Hacker News**, **arXiv**, **PubMed**, **RSS/Atom**, **GitHub**
-- Automatic deduplication (same URL from multiple channels, already-indexed sources)
-- Install curated starter templates ("shelves") for instant time-to-value
-- Approve candidates → feeds into the existing `/library add` pipeline
-
-### Roadmap
-- **v0.3**: MCP server mode for cross-client interoperability
-- **v0.4**: Quality ranking, dismiss list, semantic topic matching
-
-## Watchlist
-
-The watchlist automates the discovery half of librarianship: define what you care about and where to look, and the system scouts for candidates on your behalf.
-
-### Create a watchlist entry
+### Index a book you own
 
 ```bash
-/library watch create "AI advances" \
-    --topic "AI agents" --topic "LLM reasoning" \
-    --channel hn --channel "arxiv:cs.AI,cs.LG" \
-    --channel "rss:https://www.anthropic.com/feed" \
-    --channel "github:min_stars=50"
+/library add ~/Books/designing-data-intensive-applications.pdf
+/library search "how does consistent hashing work"
 ```
 
-### Or install a starter shelf
+Works with `.pdf`, `.md`, and `.txt` files — single files or entire directories. Adding a source automatically indexes it.
+
+### Index a URL
 
 ```bash
-/library watch shelf list            # see available templates
-/library watch shelf install ai      # AI/ML watchlist
-/library watch shelf install biomedical  # cell & gene therapy
+/library add https://docs.anthropic.com/en/docs/build-with-claude/tool-use
+/library search "tool use streaming"
 ```
+
+Fetches the page, converts HTML to markdown, indexes, and caches locally. Use `/library refresh` when docs drift.
 
 ### Scout for new content
 
+Install a starter watchlist and check what's new:
+
 ```bash
-/library watch check                 # check all entries
-/library watch check "AI advances"   # check one entry
+/library watch shelf install ai
+/library watch shelf install biomedical
+/library watch check
 ```
 
-### Manage entries
+Librarian scouts Hacker News, arXiv, PubMed, RSS feeds, and GitHub — then presents candidates you can add to your library.
+
+## Examples
+
+### Track finance topics across the web
 
 ```bash
-/library watch list                  # list all entries
-/library watch remove "AI advances"  # remove an entry
+/library watch create "Quant finance" \
+    --topic "quantitative trading" --topic "portfolio optimization" \
+    --channel hn:min_points=50 \
+    --channel "rss:https://blog.quantopian.com/feed" \
+    --channel github:min_stars=20
+
+/library watch check "Quant finance"
+```
+
+See something interesting? Add it:
+
+```bash
+/library add https://arxiv.org/abs/2401.12345
+```
+
+### Index a book from your local drive
+
+```bash
+/library add ~/Books/designing-data-intensive-applications.pdf
+
+# Now search across everything — books, docs, and web sources together
+/library search "leader election in distributed systems"
+```
+
+Any `.pdf`, `.md`, or `.txt` file works. Point at a directory to index everything inside it:
+
+```bash
+/library add ~/notes/architecture/
+```
+
+## Creating a watchlist
+
+Define what you care about (topics) and where to look (channels):
+
+```bash
+/library watch create "Cell therapy" \
+    --topic "CAR-T" --topic "CRISPR" --topic "gene editing" \
+    --channel pubmed \
+    --channel "rss:https://www.nature.com/subjects/gene-therapy.rss"
 ```
 
 ### Supported channels
@@ -95,29 +100,33 @@ The watchlist automates the discovery half of librarianship: define what you car
 
 ### Channel argument formats
 
-| Argument | Parsed config |
-|----------|--------------|
-| `hn` | `{"type": "hn"}` |
-| `hn:min_points=100` | `{"type": "hn", "min_points": 100}` |
-| `arxiv:cs.AI,cs.LG` | `{"type": "arxiv", "categories": ["cs.AI", "cs.LG"]}` |
-| `rss:https://example.com/feed` | `{"type": "rss", "url": "https://example.com/feed"}` |
-| `github:min_stars=50` | `{"type": "github", "min_stars": 50}` |
-| `pubmed` | `{"type": "pubmed"}` |
+| Argument | Example |
+|----------|---------|
+| `hn` | Default settings |
+| `hn:min_points=100` | Only high-signal stories |
+| `arxiv:cs.AI,cs.LG` | Filter by arXiv categories |
+| `rss:https://example.com/feed` | Any RSS or Atom feed (including Substack) |
+| `github:min_stars=50` | Repos above a star threshold |
+| `pubmed` | Default settings |
 
-## Architecture
+### Managing entries
 
+```bash
+/library watch list                  # list all entries
+/library watch check                 # scout all entries
+/library watch check "Cell therapy"  # scout one entry
+/library watch remove "Cell therapy" # remove an entry
 ```
-watchlist entry → channels → dedup → candidates (JSON)
-                                         ↓ (user approves)
-                               /library add <url> → index
+
+### Starter shelves
+
+Pre-built watchlists you can install in one command:
+
+```bash
+/library watch shelf list                # see what's available
+/library watch shelf install ai          # AI/ML: HN + arXiv + GitHub
+/library watch shelf install biomedical  # cell & gene therapy: PubMed
 ```
-
-- **Embeddings:** `fastembed` with `BAAI/bge-small-en-v1.5` (ONNX, no PyTorch)
-- **Vector DB:** `LanceDB` (embedded, zero-server)
-- **PDF extraction:** `PyMuPDF`
-- **Feed parsing:** `feedparser`
-
-All runtime data stored locally at `~/.claude/library-skill/`.
 
 ## All commands
 
@@ -134,6 +143,46 @@ All runtime data stored locally at `~/.claude/library-skill/`.
 /library watch shelf list            # browse templates
 /library watch shelf install <id>    # install template
 ```
+
+## Architecture
+
+```
+watchlist entry → channels → dedup → candidates (JSON)
+                                         ↓ (user approves)
+                               /library add <url> → index
+```
+
+- **Embeddings:** `fastembed` with `BAAI/bge-small-en-v1.5` (ONNX, no PyTorch)
+- **Vector DB:** `LanceDB` (embedded, zero-server)
+- **PDF extraction:** `PyMuPDF`
+- **Feed parsing:** `feedparser`
+
+All runtime data stored locally at `~/.claude/library-skill/`.
+
+## Future enhancements
+
+- MCP server mode for cross-client interoperability
+- Semantic topic matching (embedding-based, replacing substring search)
+- Quality ranking and dismiss list for seen candidates
+- PubMed abstract fetching (currently title-only summaries)
+- Hybrid retrieval (lexical + semantic) with reranking
+
+## Make it your own
+
+The `Channel` protocol makes it straightforward to add new sources. Each channel implements one method:
+
+```python
+def fetch_candidates(self, topics: list[str], since: str | None, **kwargs) -> list[Candidate]: ...
+```
+
+To add a channel (e.g., Reddit, Dev.to, YouTube):
+
+1. Create `scripts/lib/channels/your_channel.py`
+2. Implement `fetch_candidates` — hit a public API, return `Candidate` objects
+3. Decorate your class with `@register_channel("your_channel")`
+4. That's it — it's immediately usable in `--channel your_channel`
+
+See any of the existing channels (`hn.py`, `rss.py`, etc.) for a working example in under 60 lines.
 
 ## Privacy & content policy
 
