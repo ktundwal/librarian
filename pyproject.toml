@@ -14,5 +14,12 @@ dependencies = [
     "markdownify>=0.13.0",
 ]
 
+[project.optional-dependencies]
+test = ["pytest>=8.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["scripts"]
+
 [tool.setuptools]
 packages = []

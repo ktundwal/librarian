@@ -30,12 +30,23 @@ def ensure_dirs() -> None:
 
 def load_config() -> dict[str, Any]:
     """Load config from disk, creating defaults if missing."""
+    import sys
+
     ensure_dirs()
     if not CONFIG_PATH.exists():
         save_config(DEFAULT_CONFIG)
         return dict(DEFAULT_CONFIG)
-    with open(CONFIG_PATH) as f:
-        return yaml.safe_load(f) or dict(DEFAULT_CONFIG)
+    try:
+        with open(CONFIG_PATH) as f:
+            loaded = yaml.safe_load(f)
+    except yaml.YAMLError as exc:
+        print(f"Warning: invalid config YAML, using defaults: {exc}", file=sys.stderr)
+        return dict(DEFAULT_CONFIG)
+    if not isinstance(loaded, dict):
+        return dict(DEFAULT_CONFIG)
+    merged = dict(DEFAULT_CONFIG)
+    merged.update(loaded)
+    return merged
 
 
 def save_config(config: dict[str, Any]) -> None:

@@ -103,4 +103,37 @@ def _split_by_paragraphs(text: str, max_tokens: int) -> list[str]:
     if current:
         result.append("\n\n".join(current))
 
+    # Post-process: split any oversized chunks by lines
+    final: list[str] = []
+    for chunk in result:
+        if estimate_tokens(chunk) > max_tokens:
+            final.extend(_split_by_lines(chunk, max_tokens))
+        else:
+            final.append(chunk)
+
+    return final
+
+
+def _split_by_lines(text: str, max_tokens: int) -> list[str]:
+    """Split text into chunks at line boundaries, respecting token budget."""
+    if estimate_tokens(text) <= max_tokens:
+        return [text]
+
+    lines = text.split("\n")
+    result: list[str] = []
+    current: list[str] = []
+    current_tokens = 0
+
+    for line in lines:
+        line_tokens = estimate_tokens(line)
+        if current_tokens + line_tokens > max_tokens and current:
+            result.append("\n".join(current))
+            current = []
+            current_tokens = 0
+        current.append(line)
+        current_tokens += line_tokens
+
+    if current:
+        result.append("\n".join(current))
+
     return result

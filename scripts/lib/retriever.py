@@ -22,7 +22,7 @@ def search(
         source_filter: Optional filter by source_kind (book, docs, paper).
 
     Returns:
-        List of result dicts with content, attribution, and score.
+        List of result dicts with content, attribution, and distance (L2, lower = better).
     """
     db = lancedb.connect(str(INDEX_DIR))
 
@@ -63,7 +63,7 @@ def search(
 
         formatted.append({
             "rank": i + 1,
-            "score": float(results.column("_distance")[i].as_py()),
+            "distance": float(results.column("_distance")[i].as_py()),
             "content": results.column("content")[i].as_py(),
             "source_name": results.column("source_name")[i].as_py(),
             "source_kind": results.column("source_kind")[i].as_py(),

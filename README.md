@@ -21,10 +21,12 @@ Now when I am coding I am constantly searching for them and copy pasting results
 
 ## Available now (v0.1)
 
-- Add sources from file paths, directories, or URLs (URLs are registered for future refresh/index workflows)
-- Reindex local `.md`, `.txt`, `.pdf` sources into chunks + embeddings
+- Add sources from file paths, directories, or URLs
+- Fetch URL content with HTML-to-markdown conversion and caching
+- Reindex local `.md`, `.txt`, `.pdf` sources (and cached URL content) into chunks + embeddings
 - Search by query with optional `--top-k` and `--source` filters
-- Inspect index health and per-source status
+- Refresh stale URL sources (`/library refresh`)
+- Inspect index health and per-source status with freshness tracking
 
 ## Quick start
 
@@ -35,8 +37,6 @@ Now when I am coding I am constantly searching for them and copy pasting results
 /library status
 /library refresh
 ```
-
-`/library refresh` is currently a Milestone 1 stub for remote docs sources.
 
 ## Architecture
 
@@ -77,7 +77,7 @@ All runtime data is stored locally at `~/.claude/library-skill/` (config, cache,
 
 ### Search response currently returns
 - `rank`
-- `score`
+- `distance` (L2 distance — lower = better match)
 - `content`
 - `source_name`
 - `source_kind`
@@ -85,11 +85,11 @@ All runtime data is stored locally at `~/.claude/library-skill/` (config, cache,
 - `origin`
 - `indexed_at`
 - `chunk_id`
+- `fetched_at` (URL sources only)
+- `freshness` (`fresh` | `stale` | `never_fetched` | `n/a`)
 
 ## Roadmap
 
-- Remote docs fetch for URL sources + real `/library refresh`
-- Freshness state (`fresh|stale|unknown`) and sync policies
 - Hybrid retrieval (lexical + semantic) and reranking
 - Low-confidence result signaling
 - Expanded metadata contract (`title`, `fetched_at`, `license_or_terms_note`)
