@@ -1,0 +1,8 @@
+{
+  "name": "library-skill",
+  "description": "Local-first personal knowledge layer for coding agents — indexes docs, books, and papers for grounded retrieval during development.",
+  "version": "0.1.0",
+  "author": "ktundwal",
+  "repository": "https://github.com/ktundwal/library-skill",
+  "license": "MIT"
+}
