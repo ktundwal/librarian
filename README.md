@@ -1,105 +1,145 @@
-# /library
+# Librarian
 
-Local-first knowledge retrieval for coding agents.
+A local-first research scout for coding agents.
 
-`/library` turns your own technical references into grounded context an agent can use while coding—so outputs are less generic, more accurate, and easier to verify.
+**Zero API keys required.** Librarian indexes your docs, books, and papers for grounded retrieval — and now scouts the web for new content matching your interests.
 
-`library-skill` is the package/repo that powers the `/library` command.
+## Who is this for?
 
-## Why did I build this?
-
-I curate my development references in neat folders. Think purchased books, my notes in MD format, arXiv papers I downloaded and annotated.
-
-Now when I am coding I am constantly searching for them and copy pasting results. For instance Design data intensive application book has great explanations on distributed systems. Only last week I was working on a production system and I needed those concepts. I realized I am doing it many times over. Also, Fast-moving SDK docs (Anthropic/OpenAI/etc.) drift, causing outdated usage.
-
-`/library` is the workflow I built for myself so the right context shows up when I need it.
-
-- **Grounded answers from your own corpus** (`.md`, `.txt`, `.pdf`)
-- **Fast local retrieval** with source attribution in every result
-- **Privacy-first architecture** with no external vector service
-- **Native Claude workflow** through the `/library` command
-
-## Available now (v0.1)
-
-- Add sources from file paths, directories, or URLs
-- Fetch URL content with HTML-to-markdown conversion and caching
-- Reindex local `.md`, `.txt`, `.pdf` sources (and cached URL content) into chunks + embeddings
-- Search by query with optional `--top-k` and `--source` filters
-- Refresh stale URL sources (`/library refresh`)
-- Inspect index health and per-source status with freshness tracking
+- **Solo builders** who curate technical references and want them available during coding
+- **Research-heavy engineers** tracking fast-moving fields (AI, biomedical, etc.)
+- **Agentic workflows** that benefit from grounded context over generic LLM knowledge
 
 ## Quick start
 
 ```bash
+pip install -e .
+
+# Add and index your docs
 /library add <path-or-url>
-/library reindex [source-name]
-/library search "<query>" [--top-k N] [--source book|docs|paper]
-/library status
-/library refresh
+/library reindex
+
+# Search your library
+/library search "vector database indexing"
+
+# Set up automated scouting
+/library watch shelf install ai
+/library watch check
 ```
+
+## What it does
+
+### Search & Index (v0.1)
+- Add sources from file paths, directories, or URLs
+- Fetch URL content with HTML-to-markdown conversion and caching
+- Chunk and embed into a local vector index (no external services)
+- Semantic search with source attribution in every result
+- Refresh stale URL sources on demand
+
+### Watchlist & Scouting (v0.2)
+- Define **what you care about** (topics) and **where to look** (channels)
+- Scout 5 channel types: **Hacker News**, **arXiv**, **PubMed**, **RSS/Atom**, **GitHub**
+- Automatic deduplication (same URL from multiple channels, already-indexed sources)
+- Install curated starter templates ("shelves") for instant time-to-value
+- Approve candidates → feeds into the existing `/library add` pipeline
+
+### Roadmap
+- **v0.3**: MCP server mode for cross-client interoperability
+- **v0.4**: Quality ranking, dismiss list, semantic topic matching
+
+## Watchlist
+
+The watchlist automates the discovery half of librarianship: define what you care about and where to look, and the system scouts for candidates on your behalf.
+
+### Create a watchlist entry
+
+```bash
+/library watch create "AI advances" \
+    --topic "AI agents" --topic "LLM reasoning" \
+    --channel hn --channel "arxiv:cs.AI,cs.LG" \
+    --channel "rss:https://www.anthropic.com/feed" \
+    --channel "github:min_stars=50"
+```
+
+### Or install a starter shelf
+
+```bash
+/library watch shelf list            # see available templates
+/library watch shelf install ai      # AI/ML watchlist
+/library watch shelf install biomedical  # cell & gene therapy
+```
+
+### Scout for new content
+
+```bash
+/library watch check                 # check all entries
+/library watch check "AI advances"   # check one entry
+```
+
+### Manage entries
+
+```bash
+/library watch list                  # list all entries
+/library watch remove "AI advances"  # remove an entry
+```
+
+### Supported channels
+
+| Channel | Source | Filtering |
+|---------|--------|-----------|
+| `hn` | Hacker News (Algolia API) | Server-side keyword + min points |
+| `arxiv` | arXiv (Atom API) | Server-side keyword + categories |
+| `pubmed` | PubMed (E-utilities) | Server-side keyword + date range |
+| `rss` | Any RSS/Atom feed | Client-side topic matching |
+| `github` | GitHub Search API | Server-side keyword + min stars |
+
+### Channel argument formats
+
+| Argument | Parsed config |
+|----------|--------------|
+| `hn` | `{"type": "hn"}` |
+| `hn:min_points=100` | `{"type": "hn", "min_points": 100}` |
+| `arxiv:cs.AI,cs.LG` | `{"type": "arxiv", "categories": ["cs.AI", "cs.LG"]}` |
+| `rss:https://example.com/feed` | `{"type": "rss", "url": "https://example.com/feed"}` |
+| `github:min_stars=50` | `{"type": "github", "min_stars": 50}` |
+| `pubmed` | `{"type": "pubmed"}` |
 
 ## Architecture
 
-- **Embeddings:** `fastembed` with `BAAI/bge-small-en-v1.5`
-- **Vector DB:** `LanceDB` (embedded, no external service)
+```
+watchlist entry → channels → dedup → candidates (JSON)
+                                         ↓ (user approves)
+                               /library add <url> → index
+```
+
+- **Embeddings:** `fastembed` with `BAAI/bge-small-en-v1.5` (ONNX, no PyTorch)
+- **Vector DB:** `LanceDB` (embedded, zero-server)
 - **PDF extraction:** `PyMuPDF`
-- **Config:** `PyYAML`
+- **Feed parsing:** `feedparser`
 
-All runtime data is stored locally at `~/.claude/library-skill/` (config, cache, index).
+All runtime data stored locally at `~/.claude/library-skill/`.
 
-## Implementation details
+## All commands
 
-### Ingestion & chunking
-- Source registration for files, directories, and URLs
-- Local file ingestion for `.md`, `.txt`, `.pdf`
-- PDF extraction via `PyMuPDF`
-- Heading-aware chunking with token-budget splitting
-
-### Retrieval path
-- Semantic vector search in LanceDB
-- Optional source filtering (`book|docs|paper`)
-- Ranked top-k results with attribution fields
-
-### Storage model
-- Single global index table (`library`) with per-source filtering
-- Source config and local index persisted under `~/.claude/library-skill/`
-
-### Metadata currently stored per chunk
-- `chunk_id`
-- `source_id`
-- `source_name`
-- `source_kind`
-- `origin`
-- `section_path`
-- `content`
-- `content_hash`
-- `indexed_at`
-
-### Search response currently returns
-- `rank`
-- `distance` (L2 distance — lower = better match)
-- `content`
-- `source_name`
-- `source_kind`
-- `section_path`
-- `origin`
-- `indexed_at`
-- `chunk_id`
-- `fetched_at` (URL sources only)
-- `freshness` (`fresh` | `stale` | `never_fetched` | `n/a`)
-
-## Roadmap
-
-- Hybrid retrieval (lexical + semantic) and reranking
-- Low-confidence result signaling
-- Expanded metadata contract (`title`, `fetched_at`, `license_or_terms_note`)
-- Evaluation harness for retrieval quality and latency (`/library eval`)
-- Skill-triggered recommendation workflow
+```bash
+/library add <path-or-url>           # register a source
+/library reindex [source-name]       # index registered sources
+/library search "<query>"            # search the library
+/library status                      # show index health
+/library refresh [source-name]       # re-fetch remote docs
+/library watch create ...            # create watchlist entry
+/library watch list                  # list entries
+/library watch check [name]          # scout for candidates
+/library watch remove "<name>"       # remove entry
+/library watch shelf list            # browse templates
+/library watch shelf install <id>    # install template
+```
 
 ## Privacy & content policy
 
-- Local processing by default
+- Local processing by default — no external vector service
 - No source corpus shipped in this repo
+- Watchlist channels query public APIs only (no API keys required)
 - Users are responsible for adding legally obtained source materials
 
 ## License

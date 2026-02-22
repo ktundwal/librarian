@@ -1,0 +1,4 @@
+name: "Cell and gene therapy"
+topics: ["CAR-T", "gene editing", "CRISPR", "cell therapy", "gene therapy"]
+channels:
+  - type: pubmed

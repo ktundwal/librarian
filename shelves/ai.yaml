@@ -1,0 +1,9 @@
+name: "AI advances"
+topics: ["AI agents", "LLM", "transformer", "RAG", "tool use"]
+channels:
+  - type: hn
+    min_points: 50
+  - type: arxiv
+    categories: ["cs.AI", "cs.LG", "cs.CL"]
+  - type: github
+    min_stars: 50

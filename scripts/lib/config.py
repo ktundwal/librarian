@@ -1,5 +1,6 @@
 """Load/save ~/.claude/library-skill/config.yaml"""
 
+import copy
 import os
 from datetime import datetime, timezone
 from pathlib import Path
@@ -14,6 +15,7 @@ CACHE_DIR = DATA_DIR / "cache" / "sources"
 
 DEFAULT_CONFIG: dict[str, Any] = {
     "sources": [],
+    "watchlist": [],
     "embedding_model": "BAAI/bge-small-en-v1.5",
     "chunk_size": 512,
     "top_k": 5,
@@ -35,16 +37,16 @@ def load_config() -> dict[str, Any]:
     ensure_dirs()
     if not CONFIG_PATH.exists():
         save_config(DEFAULT_CONFIG)
-        return dict(DEFAULT_CONFIG)
+        return copy.deepcopy(DEFAULT_CONFIG)
     try:
         with open(CONFIG_PATH) as f:
             loaded = yaml.safe_load(f)
     except yaml.YAMLError as exc:
         print(f"Warning: invalid config YAML, using defaults: {exc}", file=sys.stderr)
-        return dict(DEFAULT_CONFIG)
+        return copy.deepcopy(DEFAULT_CONFIG)
     if not isinstance(loaded, dict):
-        return dict(DEFAULT_CONFIG)
-    merged = dict(DEFAULT_CONFIG)
+        return copy.deepcopy(DEFAULT_CONFIG)
+    merged = copy.deepcopy(DEFAULT_CONFIG)
     merged.update(loaded)
     return merged
 
