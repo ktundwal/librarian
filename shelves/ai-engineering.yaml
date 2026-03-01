@@ -1,0 +1,15 @@
+name: "AI Engineering & Agentic Coding"
+topics: ["Claude Code", "agentic coding", "AI agents", "LLM coding", "vibe coding", "agent teams"]
+channels:
+  - type: hn
+    min_points: 50
+  - type: arxiv
+    categories: ["cs.AI", "cs.SE"]
+  - type: github
+    min_stars: 100
+  - type: twitter
+    accounts: ["bcherny", "karpathy"]
+    tweet_ids:
+      - "2017742741636321619"
+      - "2007179832300581177"
+      - "2015883857489522876"

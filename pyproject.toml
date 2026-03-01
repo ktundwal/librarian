@@ -16,7 +16,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+twitter = ["playwright>=1.40.0"]
 test = ["pytest>=8.0"]
+all = ["playwright>=1.40.0"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

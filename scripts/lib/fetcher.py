@@ -1,11 +1,16 @@
 """HTTP fetching, HTML-to-markdown conversion, and caching for URL sources."""
 
 import hashlib
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from .config import CACHE_DIR
+
+_TWEET_URL_RE = re.compile(
+    r"https?://(?:twitter\.com|x\.com)/\w+/status/(\d+)"
+)
 
 
 def fetch_source(source: dict[str, Any]) -> dict[str, Any]:
@@ -89,6 +94,11 @@ def _fetch_url(
     """HTTP GET with conditional headers. Returns (status_code, headers, body)."""
     import requests
 
+    # Twitter/X URLs: route through syndication API instead of HTTP GET
+    tweet_match = _TWEET_URL_RE.match(url)
+    if tweet_match:
+        return _fetch_twitter(tweet_match.group(1))
+
     req_headers = {"User-Agent": "library-skill/0.1"}
     if etag:
         req_headers["If-None-Match"] = etag
@@ -131,3 +141,11 @@ def _html_to_markdown(html: str) -> str:
             blank_count = 0
             collapsed.append(line)
     return "\n".join(collapsed).strip()
+
+
+def _fetch_twitter(tweet_id: str) -> tuple[int, dict[str, str], str]:
+    """Fetch a tweet via syndication API and return as (status, headers, markdown)."""
+    from lib.channels.twitter import fetch_tweet_as_markdown
+
+    markdown = fetch_tweet_as_markdown(tweet_id)
+    return 200, {"content-type": "text/markdown"}, markdown

@@ -71,4 +71,4 @@ def get_channel(type_str: str) -> Channel:
 
 def _import_channels() -> None:
     """Import all channel modules to trigger @register_channel decorators."""
-    from lib.channels import hn, arxiv, pubmed, rss, github  # noqa: F401
+    from lib.channels import hn, arxiv, pubmed, rss, github, twitter  # noqa: F401

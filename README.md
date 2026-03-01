@@ -97,6 +97,7 @@ Define what you care about (topics) and where to look (channels):
 | `pubmed` | PubMed (E-utilities) | Server-side keyword + date range |
 | `rss` | Any RSS/Atom feed | Client-side topic matching |
 | `github` | GitHub Search API | Server-side keyword + min stars |
+| `twitter` | Twitter/X (syndication API + Playwright) | Known tweet IDs + timeline discovery |
 
 ### Channel argument formats
 
@@ -108,6 +109,18 @@ Define what you care about (topics) and where to look (channels):
 | `rss:https://example.com/feed` | Any RSS or Atom feed (including Substack) |
 | `github:min_stars=50` | Repos above a star threshold |
 | `pubmed` | Default settings |
+| `twitter` | Fetch specific tweets by ID (no auth) |
+| `twitter:accounts=bcherny,karpathy` | Discover tweets from timelines (requires auth) |
+
+#### Twitter setup
+
+Tweet fetching by ID works out of the box via the syndication API (no auth). Timeline discovery requires a one-time Playwright login:
+
+```bash
+pip install 'librarian[twitter]'
+playwright install chromium
+python scripts/twitter_login.py   # opens Edge, log in once, profile is saved
+```
 
 ### Managing entries
 
@@ -124,8 +137,9 @@ Pre-built watchlists you can install in one command:
 
 ```bash
 /library watch shelf list                # see what's available
-/library watch shelf install ai          # AI/ML: HN + arXiv + GitHub
-/library watch shelf install biomedical  # cell & gene therapy: PubMed
+/library watch shelf install ai              # AI/ML: HN + arXiv + GitHub
+/library watch shelf install ai-engineering  # agentic coding: HN + arXiv + GitHub + Twitter
+/library watch shelf install biomedical      # cell & gene therapy: PubMed
 ```
 
 ## All commands
@@ -161,6 +175,10 @@ All runtime data stored locally at `~/.claude/library-skill/`.
 
 ## Future enhancements
 
+- **Tweet thread expansion** — follow `in_reply_to` chain to index full threads, not just single tweets
+- **Watch → bulk add** — `watch add-all` or `watch add --channel hn` to index discovered candidates without manual per-URL adds
+- **HN discussion indexing** — fetch comment threads from `news.ycombinator.com/item?id=X`, not just the linked article (community discussion is often the value)
+- **Better source naming** — use page title or `@author: first words` for tweet sources instead of generic domain
 - MCP server mode for cross-client interoperability
 - Semantic topic matching (embedding-based, replacing substring search)
 - Quality ranking and dismiss list for seen candidates

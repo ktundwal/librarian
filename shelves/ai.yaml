@@ -7,3 +7,5 @@ channels:
     categories: ["cs.AI", "cs.LG", "cs.CL"]
   - type: github
     min_stars: 50
+  - type: twitter
+    accounts: ["karpathy"]

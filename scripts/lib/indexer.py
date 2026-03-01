@@ -74,7 +74,7 @@ def index_chunks(
             table.add_columns({"fetched_at": "''"})
         table.delete(f'source_id = "{source_id}"')
         table.add(records)
-    except FileNotFoundError:
+    except (FileNotFoundError, ValueError):
         # Table doesn't exist yet — create it
         db.create_table(TABLE_NAME, data=records)
 
