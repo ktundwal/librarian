@@ -1,10 +1,24 @@
 # Librarian
 
-A local-first research scout for coding agents.
+A personal knowledge layer for coding agents.
 
-**Zero API keys required.** Librarian indexes your docs, books, and papers for grounded retrieval — and scouts the web for new content matching your interests.
+> *"I think there is room here for an incredible new product instead of a hacky collection of scripts."*
+> -- [Andrej Karpathy, "LLM Knowledge Bases"](https://x.com/karpathy/status/1907535042378424452) (April 2, 2026)
 
-Pair it with [Context7](https://github.com/upstash/context7) for official SDK/framework docs, and Librarian for everything else — your books, papers, notes, and curated web sources.
+Librarian implements the pattern Karpathy describes: ingest raw sources, compile an LLM-maintained wiki, query it, lint it, and let your explorations compound over time. It runs locally, requires zero API keys, and works as a Claude Code skill or standalone CLI.
+
+| Karpathy's pattern | Librarian |
+|---|---|
+| Index source documents into `raw/` | `/library add` -- PDFs, URLs, arXiv, HN, RSS, GitHub, Twitter |
+| LLM compiles a wiki of `.md` files | `/library compile` -- synthesized articles with cross-references |
+| Q&A against the wiki | `/library search` -- hybrid retrieval with citations |
+| Linting / health checks | `/library lint` -- broken links, stale sources, orphan articles |
+| Filing outputs back into the wiki | Wiki auto-indexed; searches compound over time |
+| Viewable in Obsidian | Wiki is plain `.md` files -- works in Obsidian, VS Code, or any editor |
+
+**Coming soon:** [Personal agent memory](#personal-agent-memory) -- session learnings, project context, and associative recall. Two knowledge types (research + memory), one tool.
+
+Pair it with [Context7](https://github.com/upstash/context7) for official SDK/framework docs, and Librarian for everything else -- your books, papers, notes, and curated web sources.
 
 ## Quick start
 
@@ -246,17 +260,64 @@ The vector index stays local (LanceDB binary files don't sync safely). Each mach
 /library add ~/Library/CloudStorage/OneDrive-Microsoft/000-ai/wiki
 ```
 
-## Future enhancements
+## Personal agent memory
 
-- **Tweet thread expansion** — follow `in_reply_to` chain to index full threads, not just single tweets
-- **Watch → bulk add** — `watch add-all` or `watch add --channel hn` to index discovered candidates without manual per-URL adds
-- **HN discussion indexing** — fetch comment threads from `news.ycombinator.com/item?id=X`, not just the linked article (community discussion is often the value)
-- **Better source naming** — use page title or `@author: first words` for tweet sources instead of generic domain
-- MCP server mode for cross-client interoperability
-- Semantic topic matching (embedding-based, replacing substring search)
-- Quality ranking and dismiss list for seen candidates
-- PubMed abstract fetching (currently title-only summaries)
-- Hybrid retrieval (lexical + semantic) with reranking
+*Planned -- merging capabilities from [memvec](https://github.com/ktundwal/memvec).*
+
+Librarian currently handles **external knowledge** (books, papers, docs, web). The next major addition is **personal knowledge** -- the things your coding agent learns about you, your projects, and your preferences across sessions.
+
+Two knowledge types, one unified search:
+
+| | Research (current) | Memory (planned) |
+|---|---|---|
+| **Source** | Books, papers, URLs, web scouts | Session learnings, feedback, project context |
+| **Written by** | You (add) + LLM (compile) | LLM (auto-memory from sessions) |
+| **Lifecycle** | Mostly static, periodic refresh | Evolves every session |
+| **Example query** | "consensus protocols in distributed systems" | "what did I learn about auth in the Teams codebase?" |
+
+Planned memory commands:
+
+```bash
+/library remember "Teams uses OBO auth for Cortex APIs"  # explicit memory
+/library recall "auth patterns in this project"           # associative recall
+/library memory lint                                      # find stale/conflicting memories
+```
+
+The key differentiator: **associative recall** -- "what else should I remember?" When you ask about auth, it surfaces related memories about token refresh, service principals, and that one debugging session where OBO scopes were wrong. Not just keyword matching, but semantic connection.
+
+Cross-device sync works the same way as wiki sync -- memory is `.md` files in a configurable directory, safe to sync via OneDrive/Dropbox/iCloud. Vector index stays local.
+
+## MCP server
+
+*Planned.*
+
+Librarian currently runs as a Claude Code skill (slash commands). An MCP server mode will expose the same capabilities to any MCP-compatible client -- Cursor, Windsurf, custom agents, or CI pipelines.
+
+```json
+{
+  "mcpServers": {
+    "librarian": {
+      "command": "librarian",
+      "args": ["serve", "--mcp"]
+    }
+  }
+}
+```
+
+This means your knowledge base becomes a shared resource across tools. Index once, query from anywhere.
+
+## Roadmap
+
+- **Personal agent memory** -- session learnings, associative recall, cross-device sync (see [above](#personal-agent-memory))
+- **MCP server mode** -- cross-client interoperability (see [above](#mcp-server))
+- **Tweet thread expansion** -- follow `in_reply_to` chain to index full threads, not just single tweets
+- **Watch bulk add** -- `watch add-all` or `watch add --channel hn` to index discovered candidates without manual per-URL adds
+- **HN discussion indexing** -- fetch comment threads from `news.ycombinator.com/item?id=X`, not just the linked article (community discussion is often the value)
+- **Better source naming** -- use page title or `@author: first words` for tweet sources instead of generic domain
+- **Semantic topic matching** -- embedding-based, replacing substring search
+- **Quality ranking** -- dismiss list for seen candidates
+- **PubMed abstract fetching** -- currently title-only summaries
+- **Hybrid retrieval** -- lexical + semantic with reranking
 
 ## Make it your own
 
