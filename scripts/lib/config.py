@@ -12,7 +12,7 @@ DATA_DIR = Path.home() / ".claude" / "library-skill"
 CONFIG_PATH = DATA_DIR / "config.yaml"
 INDEX_DIR = DATA_DIR / "index"
 CACHE_DIR = DATA_DIR / "cache" / "sources"
-WIKI_DIR = DATA_DIR / "wiki"
+_DEFAULT_WIKI_DIR = DATA_DIR / "wiki"
 
 DEFAULT_CONFIG: dict[str, Any] = {
     "sources": [],
@@ -21,6 +21,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "chunk_size": 512,
     "top_k": 5,
     "refresh_days": 7,
+    "wiki_dir": None,
 }
 
 
@@ -29,7 +30,18 @@ def ensure_dirs() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     INDEX_DIR.mkdir(parents=True, exist_ok=True)
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    WIKI_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def get_wiki_dir() -> Path:
+    """Return configured wiki directory, falling back to default."""
+    config = load_config()
+    custom = config.get("wiki_dir")
+    if custom:
+        p = Path(custom).expanduser()
+    else:
+        p = _DEFAULT_WIKI_DIR
+    p.mkdir(parents=True, exist_ok=True)
+    return p
 
 
 def load_config() -> dict[str, Any]:

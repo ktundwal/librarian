@@ -219,9 +219,31 @@ All runtime data stored locally at `~/.claude/library-skill/`:
 ```
 ~/.claude/library-skill/
 ├── config.yaml          # sources, watchlist, settings
-├── index/               # LanceDB vector index
+├── index/               # LanceDB vector index (local, not synced)
 ├── cache/sources/       # fetched URL content
-└── wiki/                # compiled wiki articles
+└── wiki/                # compiled wiki articles (default, configurable)
+```
+
+## Cross-device wiki sync
+
+The wiki is just `.md` files — safe to sync via any cloud folder. Point `wiki_dir` in your config to a shared location:
+
+```yaml
+# ~/.claude/library-skill/config.yaml
+
+# macOS
+wiki_dir: ~/Library/CloudStorage/OneDrive-Microsoft/000-ai/wiki
+
+# Windows
+wiki_dir: ~/OneDrive - Microsoft/000-ai/wiki
+```
+
+The vector index stays local (LanceDB binary files don't sync safely). Each machine rebuilds its own index. After syncing to a new machine:
+
+```bash
+# Wiki .md files are already there via OneDrive
+# Reindex locally so /library search finds them
+/library add ~/Library/CloudStorage/OneDrive-Microsoft/000-ai/wiki
 ```
 
 ## Future enhancements

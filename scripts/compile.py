@@ -13,7 +13,7 @@ from lib.retriever import search
 
 def _read_existing_wiki(topic: str) -> list[dict[str, str]]:
     """Read existing wiki articles for a topic. Returns list of {path, content}."""
-    topic_dir = _config.WIKI_DIR / topic
+    topic_dir = _config.get_wiki_dir() / topic
     if not topic_dir.exists():
         return []
 
@@ -76,7 +76,7 @@ def main():
             "message": "No indexed material found. Add sources first.",
             "grouped_sources": [],
             "existing_wiki": [],
-            "wiki_dir": str(_config.WIKI_DIR / args.topic),
+            "wiki_dir": str(_config.get_wiki_dir() / args.topic),
         }, indent=2))
         return
 
@@ -90,7 +90,7 @@ def main():
         "total_chunks": len(results),
         "grouped_sources": grouped,
         "existing_wiki": existing,
-        "wiki_dir": str(_config.WIKI_DIR / args.topic),
+        "wiki_dir": str(_config.get_wiki_dir() / args.topic),
     }, indent=2))
 
 

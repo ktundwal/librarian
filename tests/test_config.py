@@ -6,7 +6,9 @@ from lib.config import (
     load_config,
     save_config,
     compute_freshness,
+    get_wiki_dir,
     DEFAULT_CONFIG,
+    _DEFAULT_WIKI_DIR,
 )
 
 
@@ -75,3 +77,27 @@ class TestComputeFreshness:
         # Use a date far in the past
         source = {"type": "url", "origin": "https://x.com", "refreshed_at": "2020-01-01T00:00:00+00:00"}
         assert compute_freshness(source, refresh_days=7) == "stale"
+
+
+class TestGetWikiDir:
+    def test_default_path(self, tmp_data_dir):
+        """Without wiki_dir in config, returns default."""
+        result = get_wiki_dir()
+        assert result == tmp_data_dir / "wiki"
+        assert result.exists()
+
+    def test_custom_path(self, tmp_data_dir):
+        """Custom wiki_dir in config is respected."""
+        custom = tmp_data_dir / "custom-wiki"
+        save_config({**DEFAULT_CONFIG, "wiki_dir": str(custom)})
+        result = get_wiki_dir()
+        assert result == custom
+        assert result.exists()
+
+    def test_tilde_expansion(self, tmp_data_dir):
+        """wiki_dir with ~ is expanded."""
+        save_config({**DEFAULT_CONFIG, "wiki_dir": "~/some-wiki-dir-test"})
+        result = get_wiki_dir()
+        assert "~" not in str(result)
+        # Clean up
+        result.rmdir()

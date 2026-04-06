@@ -13,24 +13,13 @@ from lib import config
 class TestLintWiki:
     """Wiki structural health checks."""
 
-    def test_no_wiki_dir(self, tmp_data_dir):
-        """When no wiki exists, returns info finding."""
+    def test_empty_wiki_dir(self, tmp_data_dir):
+        """Empty wiki dir (no .md files) returns info finding."""
         from lint import _lint_wiki
 
         findings = _lint_wiki()
         assert len(findings) == 1
         assert findings[0]["severity"] == "info"
-        assert "No wiki directory" in findings[0]["message"]
-
-    def test_empty_wiki_dir(self, tmp_data_dir):
-        """Empty wiki dir returns info finding."""
-        wiki = tmp_data_dir / "wiki"
-        wiki.mkdir(parents=True)
-
-        from lint import _lint_wiki
-
-        findings = _lint_wiki()
-        assert len(findings) == 1
         assert "empty" in findings[0]["message"]
 
     def test_missing_topic_index(self, tmp_data_dir):

@@ -21,8 +21,9 @@ _WIKI_LINK_RE = re.compile(r"\[\[([^\]]+)\]\]")
 def _lint_wiki() -> list[dict]:
     """Check wiki directory for structural issues."""
     findings: list[dict] = []
+    wiki_dir = _config.get_wiki_dir()
 
-    if not _config.WIKI_DIR.exists():
+    if not wiki_dir.exists():
         findings.append({
             "category": "wiki",
             "severity": "info",
@@ -33,8 +34,8 @@ def _lint_wiki() -> list[dict]:
     # Collect all wiki articles and cache their content (single read pass)
     all_articles: dict[str, Path] = {}
     article_contents: dict[str, str] = {}
-    for md_file in _config.WIKI_DIR.rglob("*.md"):
-        rel = md_file.relative_to(_config.WIKI_DIR)
+    for md_file in wiki_dir.rglob("*.md"):
+        rel = md_file.relative_to(wiki_dir)
         key = str(rel.with_suffix(""))
         all_articles[key] = md_file
         article_contents[key] = md_file.read_text(encoding="utf-8", errors="replace")
@@ -48,7 +49,7 @@ def _lint_wiki() -> list[dict]:
         return findings
 
     # Check for topic dirs without _index.md
-    for topic_dir in sorted(_config.WIKI_DIR.iterdir()):
+    for topic_dir in sorted(wiki_dir.iterdir()):
         if topic_dir.is_dir():
             index_path = topic_dir / "_index.md"
             if not index_path.exists():
@@ -169,19 +170,20 @@ def _lint_sources(config: dict[str, Any]) -> list[dict]:
 def _lint_cross_references(config: dict[str, Any]) -> list[dict]:
     """Check wiki articles reference sources that still exist."""
     findings: list[dict] = []
+    wiki_dir = _config.get_wiki_dir()
 
-    if not _config.WIKI_DIR.exists():
+    if not wiki_dir.exists():
         return findings
 
     source_names = {s["name"] for s in config.get("sources", [])}
 
-    for md_file in _config.WIKI_DIR.rglob("*.md"):
+    for md_file in wiki_dir.rglob("*.md"):
         content = md_file.read_text(encoding="utf-8", errors="replace")
         for line in content.split("\n"):
             if line.strip().startswith("Source:") or line.strip().startswith("*Source:"):
                 ref = line.split(":", 1)[1].strip().strip("*").strip()
                 if ref and ref not in source_names and not ref.startswith("http"):
-                    rel = md_file.relative_to(_config.WIKI_DIR)
+                    rel = md_file.relative_to(wiki_dir)
                     findings.append({
                         "category": "cross-ref",
                         "severity": "warning",
