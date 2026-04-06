@@ -142,6 +142,42 @@ Pre-built watchlists you can install in one command:
 /library watch shelf install biomedical      # cell & gene therapy: PubMed
 ```
 
+## Compile a wiki from your sources
+
+Once you've indexed a few sources on a topic, compile them into a wiki — authored concept articles that synthesize knowledge across sources with cross-references.
+
+```bash
+/library compile "distributed systems"
+/library compile "distributed systems" --query "consensus protocols"
+```
+
+The LLM gathers relevant chunks from your index, identifies distinct concepts, and writes wiki articles to `~/.claude/library-skill/wiki/<topic>/`. The wiki is automatically indexed back into the library, so future searches return both raw source chunks and synthesized wiki articles. Your explorations compound.
+
+Wiki structure:
+```
+~/.claude/library-skill/wiki/
+├── _index.md
+└── distributed-systems/
+    ├── _index.md
+    ├── consensus-protocols.md
+    ├── replication.md
+    └── partitioning.md
+```
+
+Run compile again on the same topic to update existing articles with new material — it won't recreate from scratch.
+
+## Health checks
+
+Run structural health checks across your library and wiki:
+
+```bash
+/library lint                  # check everything
+/library lint --scope wiki     # wiki only
+/library lint --scope sources  # sources only
+```
+
+Catches: broken wiki links, orphan articles, stale URL sources, unindexed sources, and cross-reference issues. Each finding includes a suggested fix command.
+
 ## All commands
 
 ```bash
@@ -156,6 +192,8 @@ Pre-built watchlists you can install in one command:
 /library watch remove "<name>"       # remove entry
 /library watch shelf list            # browse templates
 /library watch shelf install <id>    # install template
+/library compile <topic>             # compile wiki from indexed material
+/library lint                        # run health checks
 ```
 
 ## Architecture
@@ -164,6 +202,12 @@ Pre-built watchlists you can install in one command:
 watchlist entry → channels → dedup → candidates (JSON)
                                          ↓ (user approves)
                                /library add <url> → index
+                                                      ↓
+                               /library compile → wiki articles
+                                         ↑               ↓
+                                    (compounding)   /library add wiki/
+                                         ↑               ↓
+                                    /library search ← ← index
 ```
 
 - **Embeddings:** `fastembed` with `BAAI/bge-small-en-v1.5` (ONNX, no PyTorch)
@@ -171,7 +215,14 @@ watchlist entry → channels → dedup → candidates (JSON)
 - **PDF extraction:** `PyMuPDF`
 - **Feed parsing:** `feedparser`
 
-All runtime data stored locally at `~/.claude/library-skill/`.
+All runtime data stored locally at `~/.claude/library-skill/`:
+```
+~/.claude/library-skill/
+├── config.yaml          # sources, watchlist, settings
+├── index/               # LanceDB vector index
+├── cache/sources/       # fetched URL content
+└── wiki/                # compiled wiki articles
+```
 
 ## Future enhancements
 

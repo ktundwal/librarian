@@ -12,6 +12,7 @@ DATA_DIR = Path.home() / ".claude" / "library-skill"
 CONFIG_PATH = DATA_DIR / "config.yaml"
 INDEX_DIR = DATA_DIR / "index"
 CACHE_DIR = DATA_DIR / "cache" / "sources"
+WIKI_DIR = DATA_DIR / "wiki"
 
 DEFAULT_CONFIG: dict[str, Any] = {
     "sources": [],
@@ -28,6 +29,7 @@ def ensure_dirs() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     INDEX_DIR.mkdir(parents=True, exist_ok=True)
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    WIKI_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def load_config() -> dict[str, Any]:

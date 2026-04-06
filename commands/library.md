@@ -84,6 +84,55 @@ Install a shelf template as a watchlist entry.
 python3 ${CLAUDE_PLUGIN_ROOT}/scripts/watch.py shelf install <id>
 ```
 
+### `compile <topic> [--query "<query>"] [--top-k N]`
+Compile indexed library material into a wiki of authored concept articles for a topic. This is a two-phase command: a Python script gathers raw material, then **you** (the LLM) synthesize wiki articles.
+
+**Phase 1 — Gather:**
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/compile.py "<topic>" [--query "<query>"] [--top-k 30]
+```
+
+**Phase 2 — Synthesize:**
+
+After reading the JSON output, write wiki articles following these rules:
+
+1. **Identify concepts.** From the grouped source chunks, identify 3-10 distinct concepts worth their own article. Each concept should be a coherent topic that appears across multiple chunks or is substantial enough to stand alone.
+
+2. **Write articles.** For each concept, write a markdown file at `{wiki_dir}/{slug}.md` where `slug` is the concept name in kebab-case. Each article must:
+   - Have a `# Title` heading
+   - Synthesize information across sources — don't just paste chunks
+   - Include a `## Sources` section at the bottom listing which library sources contributed (format: `*Source: {source_name}*`)
+   - Use `[[other-article]]` links to cross-reference related wiki articles
+   - Be concise: 200-500 words per article. Summaries, not textbooks.
+
+3. **Write the topic index.** Create/update `{wiki_dir}/_index.md` with:
+   - `# {Topic}` heading
+   - One-line summary of the topic
+   - Bulleted list of all articles: `- [[article-slug]] — one-line description`
+   - `## Sources` section listing all library sources used
+
+4. **Update root index.** Create/update the wiki root `_index.md` (parent of the topic dir) with a list of all topic directories.
+
+5. **If existing wiki articles are returned**, update them rather than recreating from scratch. Add new information, correct stale content, add new cross-references.
+
+6. **Register the wiki.** After writing, run:
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/add.py "{wiki_dir}"
+```
+This indexes the wiki articles so future `/library search` queries return wiki content too — creating a compounding knowledge loop.
+
+### `lint [--scope wiki|sources|all]`
+Run health checks across the library.
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/lint.py [--scope all]
+```
+
+After reading the JSON output, present findings grouped by category:
+- **Warnings** first (actionable issues), then **Info** (suggestions)
+- For each finding, show the message and the suggested fix
+- If the user wants to fix issues, run the suggested commands
+- For semantic issues (contradictions, gaps, stale knowledge), offer to investigate further by reading the relevant wiki articles or source chunks
+
 ## Dispatch Rules
 
 1. Parse `$ARGUMENTS` to identify the subcommand (first word) and remaining args.
@@ -101,6 +150,8 @@ python3 ${CLAUDE_PLUGIN_ROOT}/scripts/watch.py shelf install <id>
    - For **watch remove**: Confirm removal.
    - For **watch shelf list**: Show available shelves with their topics.
    - For **watch shelf install**: Confirm the shelf was installed.
+   - For **compile**: Run Phase 1, then execute Phase 2 synthesis as described above. Show progress: "Gathered N chunks from M sources. Writing wiki articles..."
+   - For **lint**: Present findings grouped by category with severity. Offer to fix actionable issues.
 5. If the subcommand is missing or unrecognized, show available subcommands.
 6. If a script returns an error, display the error message clearly.
 
@@ -122,3 +173,5 @@ If `$ARGUMENTS` is empty, respond with:
 > - `watch remove` — Remove a watchlist entry
 > - `watch shelf list` — Browse starter templates
 > - `watch shelf install` — Install a template
+> - `compile <topic>` — Compile wiki articles from indexed material
+> - `lint` — Run health checks on library and wiki

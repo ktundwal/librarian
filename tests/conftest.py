@@ -13,6 +13,7 @@ def tmp_data_dir(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "CONFIG_PATH", tmp_path / "config.yaml")
     monkeypatch.setattr(config, "INDEX_DIR", tmp_path / "index")
     monkeypatch.setattr(config, "CACHE_DIR", tmp_path / "cache" / "sources")
+    monkeypatch.setattr(config, "WIKI_DIR", tmp_path / "wiki")
     return tmp_path
 
 
