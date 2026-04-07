@@ -24,6 +24,7 @@ Pair it with [Context7](https://github.com/upstash/context7) for official SDK/fr
 
 ```bash
 pip install -e .
+/library init
 ```
 
 ### Index a book you own
@@ -195,6 +196,7 @@ Catches: broken wiki links, orphan articles, stale URL sources, unindexed source
 ## All commands
 
 ```bash
+/library init                        # interactive setup for this machine
 /library add <path-or-url>           # register a source
 /library reindex [source-name]       # index registered sources
 /library search "<query>"            # search the library

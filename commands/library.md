@@ -16,6 +16,29 @@ The user invoked: `/library $ARGUMENTS`
 
 ## Subcommands
 
+### `init`
+Interactive onboarding — configure library settings for this machine.
+
+**Phase 1 — Show options:**
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/init.py
+```
+
+Read the JSON output. If `"existing": true`, ask the user: "Config already exists at {config_path}. Reconfigure? [y/N]". If they decline, stop.
+
+**Phase 2 — Walk through options:**
+
+For each entry in `options`, present the label, description, current value (if any), and default. Ask the user what they want. Collect their answers into a JSON object (only include keys where the user chose a non-default value, or explicitly confirmed the current value).
+
+**Phase 3 — Apply:**
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/init.py --apply '<json>'
+```
+
+Show confirmation, then suggest next steps:
+- `/library add <path-or-url>` to register your first source
+- `/library watch shelf install <id>` to set up content scouting
+
 ### `add <path-or-url>`
 Register a local file, directory, or URL as a library source. Automatically indexes after adding (no separate `reindex` needed).
 ```bash
@@ -139,6 +162,7 @@ After reading the JSON output, present findings grouped by category:
 2. For `watch` subcommands, the second word is the watch action (`create`, `list`, `check`, `remove`, `shelf`).
 3. Run the corresponding script via Bash. Always quote user-provided paths and queries.
 4. The scripts output JSON. Read the JSON and format a clear, human-readable response:
+   - For **init**: Run Phase 1, then walk through options interactively (Phase 2), then apply (Phase 3). Show confirmation and suggest next steps.
    - For **add**: Confirm what was added with source name and origin.
    - For **reindex**: Show per-source results (files processed, chunks created).
    - For **search**: Display results as a numbered list with excerpts, section paths, and source attribution.
@@ -162,6 +186,7 @@ If `$ARGUMENTS` is empty, respond with:
 > **Usage:** `/library <subcommand> [args]`
 >
 > **Subcommands:**
+> - `init` — Interactive setup for this machine
 > - `add <path-or-url>` — Register a source
 > - `reindex [source-name]` — Index registered sources
 > - `search <query>` — Search the library
